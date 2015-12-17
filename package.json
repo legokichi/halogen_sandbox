@@ -1,0 +1,18 @@
+{
+  "name": "halogen_sandbox",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "update": "rm -rf bower_components; pulp dep update",
+    "build": "pulp build",
+    "test": "pulp test",
+    "start": "pulp -w server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
