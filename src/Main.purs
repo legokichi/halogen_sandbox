@@ -1,107 +1,74 @@
+{-
 module Main where
 
-
-import Prelude
-import Control.Monad.Eff.Console (CONSOLE(), log)
-import Control.Alt ((<|>))
-import Control.Monad.Aff (Aff(), runAff)
+import Prelude (Unit(), bind, return, unit, ($))
 import Control.Monad.Eff (Eff())
-import Control.Monad.Eff.Exception (throwException)
-
-import Data.Either (Either(..))
-import Data.Foldable (foldMap)
-import Data.Foreign.Class (readProp)
-import Data.Functor (($>))
+import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.Console (CONSOLE(), print, log)
+import Control.Monad.Eff.Console.Unsafe (logAny, errorAny)
+import Control.Monad.Eff.Console2 (info, warn)
+import Control.Monad.Eff.Console2.Unsafe (infoAny, warnAny)
+import Control.Monad.Eff.Exception (Error(), EXCEPTION(), throwException, error)
+import Control.Monad.Error.Class (throwError)
+import Control.Monad.Aff (Aff(), runAff)
+--import Control.Monad.Aff.Console (print, log)
+--import Halogen
+--import Halogen.Util (appendToBody, onLoad)
+import Data.String.Regex
 import Data.Maybe (Maybe(..))
+import Data.Array (uncons)
+import Data.Int (fromString)
+-}
+module Main where
 
-import Halogen
-import Halogen.Util (appendToBody, onLoad)
-import qualified Halogen.HTML.Indexed as H
-import qualified Halogen.HTML.Events.Indexed as E
-import qualified Halogen.HTML.Properties.Indexed as P
+import Prelude (Unit(), bind, return, unit, ($), (++), (>>=))
+import Control.Monad.Eff (Eff())
+import Control.Monad.Eff.Console (CONSOLE(), print, log)
+import Control.Monad.Eff.Console.Unsafe (logAny, errorAny)
+import Control.Monad.Eff.Console2 (info, warn)
+import Control.Monad.Eff.Console2.Unsafe (infoAny, warnAny)
+import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
+import Control.Monad.Trans (lift)
+import Data.String.Regex (regex, noFlags, match)
+import Data.Maybe (Maybe())
+import Data.Array (uncons, head, tail, index)
+import Data.Int (fromString)
+{-
+main :: forall eff. Eff ( console :: CONSOLE | eff) Unit
+main = do
+  num <- runMaybeT $ parseInt "hoge"
+  case num of
+    Nothing -> do
+      log "nothing"
+      return unit
+    Just a -> do
+      log "just"
+      print a
+  return unit
+-}
+-- MaybeT :: (* -> *) -> * -> *
+-- MaybeT (Eff ()) :: * -> *
+-- MaybeT (Eff ()) Int :: *
+-- Eff :: # ! -> * -> *
+-- () :: # !
+-- Eff () :: * -> *
+-- Int :: * -- return type
+-- runMaybeT :: forall m a. MaybeT m a -> m (Maybe a)
+{-parseInt :: forall eff. String -> MaybeT (Eff ( console :: CONSOLE )) (Maybe Int)
+parseInt text = do
+  let reg = regex "foo(\\d+)" noFlags
+  arr <- return $ match reg text
+  mstr <- index arr 1
+  --str <- mstr
+  num <- fromString mstr
+  return num
+-}
 
-import Network.HTTP.Affjax (AJAX(), post)
-
--- | The state of the component.
-type State = { busy :: Boolean, code :: String, result :: Maybe String }
-
-initialState :: State
-initialState = { busy: false, code: exampleCode, result: Nothing }
-
-exampleCode :: String
-exampleCode = """module Main where
-import Prelude
-import Control.Monad.Eff.Console (print)
-fact :: Int -> Int
-fact 0 = 1
-fact n = n * fact (n - 1)
-main = print (fact 20)
-"""
-
--- | The component query algebra.
-data Query a
-  = SetCode String a
-  | MakeRequest String a
-
--- | The effects used in the app.
-type AppEffects eff = HalogenEffects (ajax :: AJAX| eff)
-
--- | The definition for the app's main UI component.
-ui :: forall eff. Component State Query (Aff (AppEffects eff))
-ui = component render eval
-  where
-
-  render :: State -> ComponentHTML Query
-  render st =
-    H.div_ $
-      [ H.h1_
-          [ H.text "ajax example / trypurescript" ]
-      , H.h2_
-          [ H.text "purescript input:" ]
-      , H.p_
-          [ H.textarea
-              [ P.value st.code
-              , E.onValueInput (E.input SetCode)
-              ]
-          ]
-      , H.p_
-          [ H.button
-              [ P.disabled st.busy
-              , E.onClick (E.input_ (MakeRequest st.code))
-              ]
-              [ H.text "Compile" ]
-          ]
-      , H.p_
-          [ H.text (if st.busy then "Working..." else "") ]
-      ]
-      ++ flip foldMap st.result \js ->
-          [ H.div_
-              [ H.h2_
-                  [ H.text "javascript output:" ]
-              , H.pre_
-                  [ H.code_ [ H.text js ] ]
-              ]
-          ]
-
-  eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
-  eval (SetCode code next) = modify (_ { code = code, result = Nothing :: Maybe String }) $> next
-  eval (MakeRequest code next) = do
-    modify (_ { busy = true })
-    result <- liftAff' (fetchJS code)
-    modify (_ { busy = false, result = Just result })
-    pure next
-
--- | Post some PureScript code to the trypurescript API and fetch the JS result.
-fetchJS :: forall eff. String -> Aff (ajax :: AJAX | eff) String
-fetchJS code = do
-  result <- post "http://try.purescript.org/compile/text" code
-  let response = result.response
-  return case readProp "js" response <|> readProp "error" response of
-    Right js -> js
-    Left _ -> "Invalid response"
-
--- | Run the app.
-main :: Eff (AppEffects ()) Unit
-main = runAff throwException (const (pure unit)) $ do
-  app <- runUI ui initialState
-  onLoad $ appendToBody app.node
+{-
+  match reg text >>= \arr　->
+  index arr 1 >>= \maybestr ->
+  maybestr >>= \str
+  fromString str >>= \num ->
+  --lift $ log $ "parseInt(" ++ text ++ ") -> " ++ str
+  return $ Just num
+-}
